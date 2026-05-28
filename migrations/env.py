@@ -12,7 +12,7 @@ from src.books.models import Book
 from src.config import settings
 from sqlmodel import SQLModel
 
-database_url = settings.database_url
+database_url = settings.DATABASE_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

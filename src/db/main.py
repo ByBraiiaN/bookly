@@ -5,7 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 engine = create_async_engine(
-    settings.database_url,
+    settings.DATABASE_URL,
     echo=True,
     connect_args={"ssl": True}
 )
