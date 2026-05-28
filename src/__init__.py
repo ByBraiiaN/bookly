@@ -7,7 +7,7 @@ from src.db.main import init_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
     print("Starting up...")
-    await init_db()
+    #await init_db() # Disabled automatic database initialization, Alembic will handle this instead
     yield
     # Perform any shutdown tasks here (e.g., disconnect from the database)
     print("Shutting down...")

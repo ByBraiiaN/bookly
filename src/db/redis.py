@@ -2,14 +2,7 @@ import redis.asyncio as redis
 from src.config import settings
 
 JTI_EXPIRATION = 3600
-"""
-token_blocklist = redis.Redis(
-    host=Settings.REDIS_HOST,
-    port=Settings.REDIS_PORT,
-    db=0,
-    decode_responses=True
-)
-"""
+
 token_blocklist = redis.from_url(
     settings.REDIS_URL,
     decode_responses=True

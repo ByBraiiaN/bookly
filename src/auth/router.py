@@ -6,12 +6,13 @@ from .schemas import UserCreateModel, UserModel, UserLoginModel
 from .services import UserService
 from .utils import create_access_token, decode_access_token, verify_password
 from datetime import timedelta, datetime
-from .dependencies import AccessTokenBearer, RefreshTokenBearer
+from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, RoleChecker
 from src.db.redis import add_jti_to_blocklist
 
 
 auth_router = APIRouter()
 user_service = UserService()
+role_checker = RoleChecker(allowed_roles=["user", "admin"])
 
 REFRESH_TOKEN_EXPIRY = timedelta(days=2)
 
@@ -38,7 +39,7 @@ async def login_user(credentials: UserLoginModel, session: AsyncSession = Depend
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
     
     access_token = create_access_token(
-        user_data={"uid": str(user.uid), "email": user.email}
+        user_data={"uid": str(user.uid), "email": user.email, "role": user.role},
     )
     refresh_token = create_access_token(
         user_data={"uid": str(user.uid), "email": user.email}, expires_delta=REFRESH_TOKEN_EXPIRY, refresh_token=True
@@ -75,6 +76,10 @@ async def refresh_access_token(token_details: dict = Depends(RefreshTokenBearer(
             "token_type": "bearer"
         }
     )
+
+@auth_router.get("/me", response_model=UserModel)
+async def get_current_user_profile(current_user: dict = Depends(get_current_user), _:bool = Depends(role_checker)):
+    return current_user
 
 @auth_router.get("/logout")
 async def logout_user(token_details: dict = Depends(AccessTokenBearer())):

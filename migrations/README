@@ -1,1 +1,95 @@
-Generic single-database configuration with an async dbapi.
+Bookly — Migrations README
+
+Project
+-------
+Bookly is an async backend API for managing books and users. It is built with FastAPI and provides routes for authentication and book management. Database schema changes are managed with Alembic migrations.
+
+Technologies
+------------
+- Python (async)
+- FastAPI (web framework)
+- Alembic (database migrations)
+- SQLAlchemy or async DB toolkit (ORM layer)
+- Redis (optional caching/session, present in src/db/redis.py)
+- Uvicorn (ASGI server)
+
+Quick local setup
+-----------------
+1. Create and activate a virtual environment:
+
+	 - Linux / macOS:
+		 ```bash
+		 python -m venv .venv
+		 source .venv/bin/activate
+		 ```
+
+	 - Windows (PowerShell):
+		 ```powershell
+		 python -m venv .venv
+		 .\.venv\Scripts\Activate.ps1
+		 ```
+
+2. Install dependencies:
+
+	 - If you use Poetry (project has a `pyproject.toml`):
+		 ```bash
+		 poetry install
+		 ```
+
+	 - Or with pip (if you have a `requirements.txt`):
+		 ```bash
+		 pip install -r requirements.txt
+		 ```
+
+3. Configure your environment variables (example):
+
+	 - `DATABASE_URL` — your database connection string
+	 - Any other variables defined in `src/config.py`
+
+4. Run migrations with Alembic (alembic.ini is at the project root):
+
+	 ```bash
+	 alembic upgrade head
+	 ```
+
+Run the app with Uvicorn
+-----------------------
+The FastAPI application instance is exported in the `src` package as `app`. To run the dev server with auto-reload:
+
+```bash
+uvicorn src:app --reload --host 0.0.0.0 --port 8000
+```
+
+If you prefer an explicit import path, you can also use:
+
+```bash
+uvicorn src.__init__:app --reload --host 0.0.0.0 --port 8000
+```
+
+Common Alembic commands
+-----------------------
+- Create a new revision (autogenerate):
+	```bash
+	alembic revision --autogenerate -m "describe change"
+	```
+- Apply migrations:
+	```bash
+	alembic upgrade head
+	```
+- Roll back one revision:
+	```bash
+	alembic downgrade -1
+	```
+
+Useful commands
+---------------
+- Start dev server: `uvicorn src:app --reload --host 0.0.0.0 --port 8000`
+- Run migrations: `alembic upgrade head`
+- Create migration: `alembic revision --autogenerate -m "message"`
+- Run tests (if present): `pytest`
+
+Notes
+-----
+- The project uses an async application lifecycle (see `src/__init__.py`).
+- Alembic manages the database schema; do not manually alter production schema without a migration.
+- Check `src/config.py` for configuration keys and expected environment variables.
