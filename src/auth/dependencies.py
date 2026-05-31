@@ -10,6 +10,12 @@ from src.db.main import get_session
 from src.db.models import User
 
 from typing import Any, List
+from src.errors import (
+    InvalidToken,
+    RefreshTokenRequired,
+    AccessTokenRequired,
+    InsufficientPermission
+)
 
 user_service = UserService()
 
@@ -31,16 +37,10 @@ class TokenBearer(HTTPBearer):
         token_data = decode_access_token(token)
 
         if not self.verify_token(token):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid or expired token"
-            )
+            raise InvalidToken()
         
         if await is_jti_in_blocklist(token_data.get("jti")):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Token has been revoked"
-            )
+            raise InvalidToken()
 
         self.verify_token_data(token_data)
 
@@ -57,18 +57,12 @@ class TokenBearer(HTTPBearer):
 class AccessTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data.get("refresh"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Refresh tokens cannot be used for authentication"
-            )
+            raise AccessTokenRequired()
         
 class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if not token_data.get("refresh"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access tokens cannot be used for refreshing"
-            )
+            raise RefreshTokenRequired()
         
 async def get_current_user(
     token_data: dict = Depends(AccessTokenBearer()),
@@ -86,9 +80,6 @@ class RoleChecker:
         print("-"*30)
         print(self.allowed_roles)
         if current_user.role not in self.allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access this resource"
-             )
+            raise InsufficientPermission()
         
         return True

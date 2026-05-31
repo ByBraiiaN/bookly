@@ -8,6 +8,11 @@ from src.db.main import get_session
 
 from .schemas import TagModel, TagAddModel, TagCreateModel
 from .services import TagService
+from src.errors import (
+    TagNotFound,
+    TagAlreadyExists,
+    BookNotFound
+)
 
 tag_router = APIRouter()
 tag_service = TagService()
@@ -31,7 +36,7 @@ async def add_tags_to_book(
 ) -> Book:
     updated_book = await tag_service.add_tags_to_book(book_uid, tag_data, session)
     if not updated_book:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+        raise BookNotFound()
     
     return updated_book
 
@@ -43,7 +48,7 @@ async def update_tag(
 ) -> TagModel:
     updated_tag = await tag_service.update_tag(tag_uid, tag_data, session)
     if not updated_tag:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        raise TagNotFound()
     
     return updated_tag
 
@@ -51,4 +56,4 @@ async def update_tag(
 async def delete_tag(tag_uid: str, session: AsyncSession = Depends(get_session)) -> None:
     updated_tag = await tag_service.delete_tag(tag_uid, session)
     if not updated_tag:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        raise TagNotFound()

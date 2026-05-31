@@ -73,7 +73,7 @@ class TagService:
         """Update a tag"""
         tag = await self.get_tag_by_uid(tag_uid, session)
         if not tag:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            raise TagNotFound()
 
         update_data_dict = tag_update_data.model_dump()
 
@@ -89,8 +89,7 @@ class TagService:
         """Delete a tag"""
         tag = await self.get_tag_by_uid(tag_uid, session)
         if not tag:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-            #raise TagNotFound()
+            raise TagNotFound()
 
         await session.delete(tag)
         await session.commit()

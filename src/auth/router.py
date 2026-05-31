@@ -8,6 +8,12 @@ from .utils import create_access_token, decode_access_token, verify_password
 from datetime import timedelta, datetime
 from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, RoleChecker
 from src.db.redis import add_jti_to_blocklist
+from src.errors import (
+    UserAlreadyExists,
+    UserNotFound,
+    InvalidCredentials,
+    InvalidToken
+)
 
 
 auth_router = APIRouter()
@@ -20,12 +26,12 @@ REFRESH_TOKEN_EXPIRY = timedelta(days=2)
 async def create_user_account(user_data: UserCreateModel, session: AsyncSession = Depends(get_session)):    
     user = await user_service.get_user_by_email(user_data.email, session)
     if user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User with this email already exists")
+        raise UserAlreadyExists()
     
     new_user = await user_service.create_user(user_data, session)
 
     if not new_user:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create user account")
+        raise InvalidCredentials()
     
     return new_user
 
@@ -34,10 +40,10 @@ async def login_user(credentials: UserLoginModel, session: AsyncSession = Depend
     user = await user_service.get_user_by_email(credentials.email, session)
     print(user)
     if not user: # or not user.is_verified
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or account not verified")
+        raise UserNotFound()
     
     if not verify_password(credentials.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+        raise InvalidCredentials()
     
     access_token = create_access_token(
         user_data={"uid": str(user.uid), "email": user.email, "role": user.role},
@@ -66,7 +72,7 @@ async def refresh_access_token(token_details: dict = Depends(RefreshTokenBearer(
     expiry_timestamp = token_details.get("exp")
 
     if datetime.utcfromtimestamp(expiry_timestamp) < datetime.utcnow():
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired")
+        raise InvalidToken()
 
     new_access_token = create_access_token(user_data=token_details.get("user"))
     
