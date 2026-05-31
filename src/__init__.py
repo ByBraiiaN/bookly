@@ -6,6 +6,7 @@ from src.reviews.router import review_router
 from src.tags.router import tag_router
 from src.db.main import init_db
 from .errors import register_all_errors
+from .middleware import register_middleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
     print("Shutting down...")
 
 version = "v1"
+version_prefix =f"/api/{version}"
 
 description = """
 A REST API for a book review web service.
@@ -28,11 +30,9 @@ This REST API is able to;
 - Add tags to Books e.t.c.
 """
 
-version_prefix =f"/api/{version}"
-
 app = FastAPI(
     title="Bookly API",
-    description="A simple API for managing books",
+    description=description,
     version=version,
     #,lifespan=lifespan
     license_info={"name": "MIT License", "url": "https://opensource.org/license/mit"},
@@ -48,6 +48,8 @@ app = FastAPI(
 )
 
 register_all_errors(app)
+
+register_middleware(app)
 
 app.include_router(book_router, prefix=f"{version_prefix}/books", tags=["books"])
 app.include_router(auth_router, prefix=f"{version_prefix}/auth", tags=["auth"])

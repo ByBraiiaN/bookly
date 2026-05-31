@@ -6,7 +6,7 @@ from src.config import settings
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,
+    #echo=True, # Now middleware handles logging, so we can disable SQLAlchemy's own logging to avoid duplicate logs
     connect_args={"ssl": True}
 )
 
