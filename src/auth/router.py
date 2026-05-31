@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
-from .schemas import UserCreateModel, UserModel, UserLoginModel
+from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel
 from .services import UserService
 from .utils import create_access_token, decode_access_token, verify_password
 from datetime import timedelta, datetime
@@ -23,6 +23,7 @@ async def create_user_account(user_data: UserCreateModel, session: AsyncSession 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User with this email already exists")
     
     new_user = await user_service.create_user(user_data, session)
+
     if not new_user:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create user account")
     
@@ -77,7 +78,7 @@ async def refresh_access_token(token_details: dict = Depends(RefreshTokenBearer(
         }
     )
 
-@auth_router.get("/me", response_model=UserModel)
+@auth_router.get("/me", response_model=UserBooksModel)
 async def get_current_user_profile(current_user: dict = Depends(get_current_user), _:bool = Depends(role_checker)):
     return current_user
 

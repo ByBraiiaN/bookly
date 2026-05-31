@@ -2,11 +2,13 @@ from fastapi import Request, HTTPException, status, Depends
 from fastapi.security import HTTPBearer
 from fastapi.security.http import HTTPAuthorizationCredentials
 from sqlmodel.ext.asyncio.session import AsyncSession
+
 from .utils import decode_access_token
+from .services import UserService
 from src.db.redis import is_jti_in_blocklist
 from src.db.main import get_session
-from .services import UserService
-from .models import User
+from src.db.models import User
+
 from typing import Any, List
 
 user_service = UserService()
@@ -79,8 +81,11 @@ class RoleChecker:
     def __init__(self, allowed_roles: List[str]):
         self.allowed_roles = allowed_roles
 
-    async def __call__(self, current_user: dict = Depends(get_current_user)):        
-        if current_user.get("role") not in self.allowed_roles:
+    async def __call__(self, current_user: User = Depends(get_current_user)):  
+        print("Current user role:", current_user)   
+        print("-"*30)
+        print(self.allowed_roles)
+        if current_user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access this resource"

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
-from .schemas import Book, BookUpdateModel, BookCreateModel
+from .schemas import Book, BookUpdateModel, BookCreateModel, BookDetailModel
 from .services import BookService
 from src.auth.dependencies import AccessTokenBearer, RoleChecker
 
@@ -37,12 +37,12 @@ async def create_book(
     book = await book_service.create_book(book_data, user_id, session)
     return book
 
-@book_router.get("/{book_uid}", response_model=Book, dependencies=[role_checker])
+@book_router.get("/{book_uid}", response_model=BookDetailModel, dependencies=[role_checker])
 async def get_book_by_id(
     book_uid: str,
     session: AsyncSession = Depends(get_session),
     token_details: dict = Depends(access_token_bearer)
-) -> Book:
+) -> dict:
     book = await book_service.get_book_by_id(book_uid, session)
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
