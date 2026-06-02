@@ -30,3 +30,13 @@ class UserBooksModel(UserModel):
 class UserLoginModel(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
+
+class EmailModel(BaseModel):
+    addresses: List[str]
+
+class PasswordResetModel(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirmModel(BaseModel):
+    new_password: str = Field(..., min_length=6)
+    confirm_password: str = Field(..., min_length=6)

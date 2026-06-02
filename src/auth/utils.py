@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from src.config import settings
 import jwt
 import logging
+from itsdangerous import URLSafeTimedSerializer
 
 password_context = CryptContext(schemes=["bcrypt"])
 
@@ -41,4 +42,19 @@ def decode_access_token(token: str) -> dict:
         return payload
     except jwt.PyJWTError as e:
         logging.exception(f"JWT error: {str(e)}")
+        return None
+
+serializer = URLSafeTimedSerializer(
+    settings.JWT_SECRET_KEY, salt="email-confirmation"
+)
+
+def create_url_safe_token(data: dict, expires_sec: int = 3600) -> str:
+    return serializer.dumps(data)
+
+def decode_url_safe_token(token: str, max_age: int = 3600) -> dict:
+    try:
+        data = serializer.loads(token)
+        return data
+    except Exception as e:
+        logging.exception(f"Token decoding error: {str(e)}")
         return None
