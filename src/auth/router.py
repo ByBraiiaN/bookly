@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -8,7 +8,8 @@ from .utils import create_access_token, decode_access_token, verify_password, cr
 from datetime import timedelta, datetime
 from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, RoleChecker
 from src.db.redis import add_jti_to_blocklist
-from src.mail import mail, create_message
+
+from src.celery_tasks import send_email
 from src.config import settings
 from src.errors import (
     UserAlreadyExists,
@@ -30,15 +31,17 @@ async def send_mail(emails: EmailModel):
 
     html = "<h1>Welcome to the app</h1>"
     subject = "Welcome to our app"
-
-    message = create_message(subject=subject, recipients=addresses, body=html)
     
-    await mail.send_message(message)
+    send_email.delay(recipients=addresses, subject=subject, body=html)
 
     return {"message": "Email sent successfully"}
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def create_user_account(user_data: UserCreateModel, session: AsyncSession = Depends(get_session)):    
+async def create_user_account(
+    user_data: UserCreateModel, 
+    bk_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session)
+):    
     user = await user_service.get_user_by_email(user_data.email, session)
     if user:
         raise UserAlreadyExists()
@@ -55,8 +58,8 @@ async def create_user_account(user_data: UserCreateModel, session: AsyncSession 
     <p>Click the link below to verify your email address:</p>
     <a href="{link}">Verify Email</a>
     """
-    message = create_message(subject="Verify Your Email", recipients=[user_data.email], body=html_message)
-    await mail.send_message(message)
+
+    send_email.delay(recipients=[user_data.email], subject="Verify Your Email", body=html_message)
 
     return {
         "message": "Account created successfully! Check your email to verify your account.",

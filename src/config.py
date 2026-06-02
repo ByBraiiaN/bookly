@@ -23,3 +23,7 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+broker_url = settings.REDIS_URL+"?ssl_cert_reqs=CERT_NONE"
+result_backend = settings.REDIS_URL+"?ssl_cert_reqs=CERT_NONE"
+broker_connection_retry_on_startup = True

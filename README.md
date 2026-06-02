@@ -31,11 +31,6 @@ Quick start (local)
 		 poetry install
 		 ```
 
-	 - Or with pip (if you have `requirements.txt`):
-		 ```bash
-		 pip install -r requirements.txt
-		 ```
-
 3. Set environment variables (example):
 
 	 - `DATABASE_URL` — database connection string
@@ -49,7 +44,7 @@ Quick start (local)
 
 Run the app (development)
 -------------------------
-Start the dev server with auto-reload:
+Start the dev server with UV (uvicorn) and auto-reload:
 
 ```bash
 uvicorn src:app --reload --host 0.0.0.0 --port 8000
